@@ -1,0 +1,5 @@
+*.[oa]
+*~
+*.dir
+*.pag
+set_env.rb
