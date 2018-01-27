@@ -5,30 +5,19 @@
 #
 # @author: "Григоренко А.О. (mailto:alex.grigorenko2942@yandex.ru)"
 # @date: 2018-01-13
-# @version = "0.1.0"
+# @version = "0.2.0"
 #
 #===================================================================================================
 
-require 'telegram/bot'
 require 'net/http'
 require 'json'
 
-require "./set_env.rb"
 require "./DB_Exec.rb"
+require "./TG_Sender.rb"
 
-class Events_KEBot
+class EventsTP_KEBot
   def initialize (url, link_name)
-    if ENV['TGBK_1'].nil?
-      puts "Bot is not set."
-      exit 0
-    end
-
-    if !ENV['TGBCh_2'].nil? && (/@[a-z]/ =~ ENV['TGBCh_2']) == 0
-    else
-      puts "Channel is not set."
-      exit 0
-    end
-
+    @tg             = TG_Sender.new ENV['TGBK_1'], ENV['TGBCh_2']
     @limit_at_time  = 1    # макс. число событий за раз
     @url            = url
     @db             = DB_Exec.new(link_name)
@@ -59,23 +48,9 @@ class Events_KEBot
           <b>Location:</b> #{event['location']['city'].to_s}, #{event['location']['address'].to_s}
         MESSAGE
 
-        tg_send( "#{message}\n" )
+        @tg.tg_send( "#{message}\n" )
         count += 1
       else
-      end
-    end
-  end
-
-private
-  # отправка сообщения в ТГ
-  def tg_send(message)
-    Telegram::Bot::Client.run(ENV['TGBK_1']) do |bot|
-      if bot.api.sendMessage(chat_id: "#{ENV['TGBCh_2']}", text: message, parse_mode: "HTML")
-        puts "Message was send successful.\n"
-        true
-      else
-        puts "Message was not send. See log."
-        false
       end
     end
   end
