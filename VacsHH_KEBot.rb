@@ -16,7 +16,7 @@ require "./DB_Exec.rb"
 require "./TG_Sender.rb"
 
 
-class Vac_KEBot
+class VacsHH_KEBot
   def initialize (url, link_name)
     @tg       = TG_Sender.new ENV['TGBK_1'], ENV['TGBCh_1']
     @url      = url

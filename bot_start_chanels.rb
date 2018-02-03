@@ -12,7 +12,8 @@
 require "./set_env.rb"
 require "./EventsTP_KEBot.rb"
 require "./EventsTVKR_KEBot.rb"
-require "./Vac_KEBot.rb"
+require "./VacsHH_KEBot.rb"
+require "./VacsTVKR_KEBot.rb"
 
 
 # верю, надеюсь, жду
@@ -50,13 +51,13 @@ donors_arr = [
 # с ожиднием (минут):
 # 60
 
-_sleep_time = 60 * 4
+_sleep_time = 60 * 60 * 4
 loop do
-  sleep 3600 if Time.now.h <= 8 && Time.now.h > 21
+  sleep 3600 if Time.now.hour <= 8 && Time.now.hour > 21
 
   donors_arr.each do |ll|
     link = "https://hh.ru/search/vacancy/rss?no_magic=true&employer_id=#{ll}&isAutosearch=true"
-    a = Vac_KEBot.new link, "hh"
+    a = VacsHH_KEBot.new link, "hh"
     a.sync
   end
   sleep _sleep_time / 4
@@ -67,11 +68,8 @@ loop do
   sleep _sleep_time / 4
 
 
-  donors_arr.each do |ll|
-    link = "https://hh.ru/search/vacancy/rss?no_magic=true&employer_id=#{ll}&isAutosearch=true"
-    a = Vac_KEBot.new link, "hh"
-    a.sync
-  end
+  a = VacsTVKR_KEBot.new 6
+  a.sync
   sleep _sleep_time / 4
 
 
