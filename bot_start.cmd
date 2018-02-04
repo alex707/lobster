@@ -1,0 +1,1 @@
+ruby C:\projects\lobster\exec_parsing.rb >> full_executing.log

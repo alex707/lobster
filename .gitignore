@@ -4,3 +4,5 @@
 *.pag
 *.pem
 set_env.rb
+*.log
+*.exe

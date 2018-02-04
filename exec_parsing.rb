@@ -46,36 +46,38 @@ donors_arr = [
 ]
 
 
-
-# отправление его в цикл
-# с ожиднием (минут):
-# 60
-
-_sleep_time = 60 * 60 * 4
-loop do
-  sleep 3600 if Time.now.hour <= 8 && Time.now.hour > 21
-
+def exec_parsing
+  puts "#{Time.now}_B_VacsHH_KEBot"
   donors_arr.each do |ll|
     link = "https://hh.ru/search/vacancy/rss?no_magic=true&employer_id=#{ll}&isAutosearch=true"
     a = VacsHH_KEBot.new link, "hh"
     a.sync
   end
-  sleep _sleep_time / 4
+  sleep 60
+  puts "#{Time.now}_E_VacsHH_KEBot"
 
 
+  puts "#{Time.now}_B_EventsTVKR_KEBot"
   a = EventsTVKR_KEBot.new 1
   a.sync
-  sleep _sleep_time / 4
+  sleep 60
+  puts "#{Time.now}_E_EventsTVKR_KEBot"
 
 
+  puts "#{Time.now}_B_VacsTVKR_KEBot"
   a = VacsTVKR_KEBot.new 6
   a.sync
-  sleep _sleep_time / 4
+  sleep 60
+  puts "#{Time.now}_E_VacsTVKR_KEBot"
 
 
+  puts "#{Time.now}_B_EventsTP_KEBot"
   link = "https://api.timepad.ru/v1/events.json?limit=50&skip=0&fields=location,description_short&category_ids=374&sort=+starts_at"
   a = EventsTP_KEBot.new link, "tpad"
   a.sync
-  sleep _sleep_time / 4
-
+  sleep 60
+  puts "#{Time.now}_E_EventsTP_KEBot"
 end
+
+# выполнение скриптов
+exec_parsing
