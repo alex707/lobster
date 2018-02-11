@@ -65,7 +65,7 @@ class VacsTVKR_KEBot
         end
       end
 
-      raise "next pages are empty!!!" if tries_count > 31
+      break if @par >= 12
       tries_count += 1
     end
   end

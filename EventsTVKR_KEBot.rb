@@ -20,45 +20,59 @@ require "./DB_Exec.rb"
 ENV['SSL_CERT_FILE']  = './cacert.pem'
 
 class EventsTVKR_KEBot
-  def initialize(max_num = 5)
+  def initialize(max_num = 5, region)
     @max_num  = max_num
-    @url  = 'https://tvkinoradio.ru/events?date[start]='
+    # TvKinoRadio из НУЖНЫХ имеет только msk
+    # другие - скипать
+    @rgn  = region == 'msk' ? "townId=1&" : nil
+    @url  = "https://tvkinoradio.ru/events?#{@rgn}date[start]="
     @par  = Date.today
-    @db   = DB_Exec.new("tvkr")
+    @db   = DB_Exec.new("tvkr_events")
     @tg   = TG_Sender.new ENV['TGBK_1'], ENV['TGBCh_2']
+
   end
 
   def sync
-    all_links = []
+    # TvKinoRadio из НУЖНЫХ имеет только msk
+    # другие - скипать
+    return if @rgn.nil?
 
-    tries_count = 0 # число попыток
-    # число ссылок должно быть не меньше желаемого
-    while all_links.size <= @max_num do
+    tries_count   = 0
+    comlete_count = 0
+    until comlete_count >= @max_num
       # извлечение всех событий на день.
       events_per_date_doc = to_do_request "#{@url}#{@par.to_s}", true
 
       # парсинг данных. извлечение ссылок.
-      all_links += events_thumbnail_links events_per_date_doc
-      par_up
-      raise "next mounth is empty!!!" if tries_count > 31
-      tries_count += 1
-    end
+      current_links = events_thumbnail_links events_per_date_doc
 
-    all_links.first(@max_num).each do |link|
-      # переход на страницу с событием
-      event_detailed_doc = to_do_request link
+      # если нет доступных ссылок на странице, то меняется номер стр. на следующий.
+      if current_links.empty?
+        par_up
+        puts "par_up"
+      else
+        current_links.each do |event|
+          # выход из цикла, если отправлено достаточное число ссылок
+          break if comlete_count >= @max_num
 
-      # хз. что писать в дату публикации, т.к. она не задаётся
-      # буду надеятся, что повторно одни и те же страницы ресурс не используют.
-      time = nil
-      if !@db.check_exists_in_DB?(link, time)
-        @db.insert_to_DB(link, time)
+          event.each do |link, time|
+            if !@db.check_exists_in_DB?(link, time)
+              event_page  = to_do_request link
 
-        # извлечение события
-        message = extract_event_info event_detailed_doc
+              # извлечение события
+              message     = extract_event_info event_page
 
-        @tg.tg_send message
+              @tg.tg_send message
+
+              @db.insert_to_DB(link, time)
+              comlete_count += 1
+            end
+          end
+        end
       end
+
+      break if tries_count > 31
+      tries_count += 1
     end
   end
 
@@ -79,7 +93,7 @@ private
         time = nil
         if !@db.check_exists_in_DB?(link, time)
           # сбор ссылок, которые ещё не опубликованы
-          links_arr << link
+          links_arr << {link => time}
         end
       end
 
@@ -98,20 +112,20 @@ private
     uri = URI(link)
 
     req = Net::HTTP::Get.new(uri)
+
     req['X-Requested-With'] = 'XMLHttpRequest' if flag
 
     res = Net::HTTP.start(uri.hostname, uri.port, :use_ssl => true, :veryfi_mode => OpenSSL::SSL::VERIFY_NONE, :ca_file => ENV['SSL_CERT_FILE'] ) do |http|
       http.request(req)
     end
 
-    Nokogiri::HTML(res.body.force_encoding("UTF-8"))
+    Nokogiri::HTML(res.body, nil, Encoding::UTF_8.to_s)
   end
 
 
   def extract_event_info doc_from_event
     # извлекает по ссылке всю информацию о событии
     link      = doc_from_event.css("link[rel='canonical']").first['href'].to_s.strip
-    puts link
     title     = doc_from_event.css("h2[class='page-h']").text
     time1     = doc_from_event.css("span[class='item-h event-date-day']").first.text.strip
     time2     = doc_from_event.css("span[class='guide-grey-dark event-date-weekday']").first

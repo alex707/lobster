@@ -37,4 +37,18 @@ class DB_Exec
     @db[link] = pubDate.to_s
   end
 
+  # возвращает элементы
+  def view_records max_num = -1
+    records_arr = []
+
+    count = 0
+    @db.select do |kLink, vPubDate|
+      records_arr << {kLink => vPubDate}
+      break if max_num != -1 && max_num == count
+      count += 1
+    end
+
+    records_arr
+  end
+
 end

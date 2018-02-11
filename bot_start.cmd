@@ -1,1 +1,3 @@
-ruby C:\projects\lobster\exec_parsing.rb >> full_executing.log
+title bot_start
+ruby C:\projects\lobster\exec_parsing.rb
+pause
